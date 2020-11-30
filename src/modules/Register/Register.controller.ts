@@ -1,8 +1,10 @@
-import { Body, Controller, Delete, Get, HttpStatus, Ip, Param, Post, Put } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpStatus, Ip, Param, Post, Put, Session } from '@nestjs/common'
 import { createOne, findByCondition, result } from 'src/helper/sqlHelper'
 import { USER_ACCOUNT } from 'src/db/tables'
 import { eh } from 'src/helper/emailHelper'
 import { getRandom } from 'src/helper/utils'
+import { Store } from 'src/helper/store'
+import { sessionStore } from 'src/db/globalStore'
 
 interface CreateDto {
   email: string
@@ -12,14 +14,16 @@ interface CreateDto {
 
 @Controller('/register')
 export class RegisterController {
-  codeMap: Map<string, string> = new Map()
-  ipMap: Map<string, number> = new Map()
+  // 邮箱验证码缓存
+  codeMap = new Store()
+  // 对 ip 限制
+  ipMap = new Store()
 
   /**
    * 创建用户
    */
   @Post()
-  async create(@Body() { email, password, code }: CreateDto) {
+  async create(@Body() { email, password, code }: CreateDto, @Session() session) {
     // 校验邮箱
     const memoryCode = this.codeMap.get(email)
     if (memoryCode) {
@@ -27,7 +31,13 @@ export class RegisterController {
         // 创建用户
         try {
           await createOne(USER_ACCOUNT, { email, password })
-          // 生成 token
+
+          // 储存会话状态
+          sessionStore.set(email, email)
+          // 返回 sessionid
+          session.id = email
+
+          this.codeMap.delete(email)
           return result(`创建成功`, HttpStatus.OK)
         } catch (error) {
           return result(error)
@@ -36,7 +46,7 @@ export class RegisterController {
         return result('验证码错误')
       }
     } else {
-      return result('验证码已失效')
+      return result('邮箱验证码已失效')
     }
   }
 
@@ -59,14 +69,10 @@ export class RegisterController {
       if (Array.isArray(row) && row.length === 0) {
         // 不存在邮箱 => 发送邮件
         const code = getRandom(6)
-        this.codeMap.set(email, code)
+        this.ipMap.set(ip, Date.now())
         await eh.send(email, code)
         res = result('邮件发送成功!', HttpStatus.OK)
-        this.ipMap.set(ip, Date.now())
-        setTimeout(() => {
-          // 设置过期时间
-          this.ipMap.delete(ip)
-        }, 1000 * 60 * 10)
+        this.codeMap.set(email, code, 1000 * 60 * 10)
       } else {
         res = result('参数错误,邮箱已注册!')
       }
@@ -77,12 +83,16 @@ export class RegisterController {
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateCatDto) {
+  update(@Param('id') id: string, @Session() session) {
+    // console.log(session.username)
+    session.username = id
     return `This action updates a #${id} cat`
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: string, @Session() session) {
+    console.log(session.username)
+
     return `This action removes a #${id} cat`
   }
 }

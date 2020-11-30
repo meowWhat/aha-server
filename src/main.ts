@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { db } from './db/driver'
 import * as rateLimit from 'express-rate-limit'
+import * as session from 'express-session'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
@@ -13,7 +14,9 @@ async function bootstrap() {
       max: 40, // limit each IP to 100 requests per windowMs
     }),
   )
+  app.use(session({ secret: 'ddd@fa', cookie: { maxAge: 1000 * 60 * 60 * 24 * 15 } }))
   db.connect()
+
   try {
     await app.listen(port)
     console.log(`服务器启动成功,监听于端口${port}`.green)
