@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpStatus, Ip, Param, Post, Put, Session } from '@nestjs/common'
-import { createOne, findByCondition, result } from 'src/helper/sqlHelper'
-import { USER_ACCOUNT } from 'src/db/tables'
+import { createOne, findByCondition, result, transaction } from 'src/helper/sqlHelper'
+import { USER, USER_ACCOUNT, USER_FRIENDS, USER_INFO } from 'src/db/tables'
 import { eh } from 'src/helper/emailHelper'
 import { getRandom } from 'src/helper/utils'
 import { Store } from 'src/helper/store'
@@ -29,18 +29,50 @@ export class RegisterController {
     if (memoryCode) {
       if (memoryCode === code) {
         // 创建用户
+        let flag = true
+        let rollback: any
         try {
-          await createOne(USER_ACCOUNT, { email, password })
+          const cbs = await transaction()
+          const commit = cbs.commit
+          rollback = cbs.rollback
 
+          // 创建用户账号
+          const { insertId: tb_user_account } = await createOne(USER_ACCOUNT, { email, password })
+
+          // 创建用户好友表
+          const { insertId: tb_user_friends } = await createOne(USER_FRIENDS, {})
+          // 创建用户信息表
+          const { insertId: tb_user_info } = await createOne(USER_INFO, { nickname: email, email })
+          // 创建用户总表
+          await createOne(USER, { tb_user_account, tb_user_friends, tb_user_info })
+
+          // 顺利执行 提交
+          await new Promise((resolve, reject) => {
+            commit((err: any) => {
+              if (!err) {
+                resolve(null)
+              } else {
+                // 提交失败 回滚
+                flag = false
+                rollback()
+                reject(err)
+              }
+            })
+          })
           // 储存会话状态
           sessionStore.set(email, email)
           // 返回 sessionid
-          session.id = email
-
+          session.user = email
+          // 移除验证码
           this.codeMap.delete(email)
-          return result(`创建成功`, HttpStatus.OK)
+          return result(`用户${email}创建成功`, HttpStatus.OK)
         } catch (error) {
-          return result(error)
+          if (flag) {
+            console.log('回滚')
+            // 创表错误 回滚
+            rollback && rollback()
+          }
+          return result('创建用户失败' + error)
         }
       } else {
         return result('验证码错误')
@@ -89,10 +121,6 @@ export class RegisterController {
     return `This action updates a #${id} cat`
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string, @Session() session) {
-    console.log(session.username)
-
-    return `This action removes a #${id} cat`
-  }
+  @Delete()
+  async remove() {}
 }

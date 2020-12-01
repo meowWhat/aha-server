@@ -12,7 +12,6 @@ class MysqlDriver {
   query(sql: string, values: any[]): Promise<any> {
     // 格式化 sql 语句
     const formatSql = this.db.format(sql, values)
-    console.log(formatSql)
     return new Promise((resolve, reject) => {
       this.db.query(formatSql, (err, row) => {
         if (err) {

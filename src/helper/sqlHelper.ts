@@ -93,3 +93,20 @@ export const result = (message: any, code = HttpStatus.BAD_REQUEST) => {
     message,
   }
 }
+
+/**
+ * 事务
+ */
+export const transaction = (): Promise<{ rollback: any; commit: any }> => {
+  return new Promise((resolve, reject) => {
+    db.db.beginTransaction((err) => {
+      if (err) {
+        reject(err)
+      }
+      resolve({
+        rollback: db.db.rollback.bind(db.db),
+        commit: db.db.commit.bind(db.db),
+      })
+    })
+  })
+}
