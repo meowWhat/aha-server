@@ -1,33 +1,25 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, BadRequestException } from '@nestjs/common'
-import { UserService } from './user.service'
+import { Controller, Get, Put, Session } from '@nestjs/common'
+import { MySession } from 'src/type'
 
-@Controller('/user')
+@Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
-
-  @Post()
-  create(@Body() createCatDto) {
-    return 'This action adds a new cat'
+  // 查询用户 info
+  @Get('/info')
+  getInfo(@Session() { userKey }: MySession): string {
+    return 'This action returns info'
+  }
+  // 修改用户 info
+  @Put('/info')
+  updateInfo() {
+    return 'this action update info'
   }
 
-  @Get()
-  findAll(@Query() query) {
-    // return `This action returns all cats (limit: ${query.limit} items)`
-    throw new BadRequestException()
+  // 查询用户好友列表
+  @Get('/friends')
+  getFriends() {
+    return 'friends'
   }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return { id, code: 200 }
-  }
-
-  @Put(':id')
-  update(@Param('id') id: string, @Body() updateCatDto) {
-    return `This action updates a #${id} cat`
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return `This action removes a #${id} cat`
-  }
+  // 更新好友分组
+  @Put('/friends/group')
+  updateGroup() {}
 }

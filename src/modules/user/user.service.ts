@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common'
-
+  
 @Injectable()
 export class UserService {
-  hello(): string {
-    return 'hello user service sss'
+  private readonly cats = []
+  create(cat) {
+    this.cats.push(cat)
+  }
+  findAll() {
+    return this.cats
   }
 }

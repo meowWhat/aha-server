@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpStatus, Ip, Post, Query, Session, Put } from
 import { createOne, findByCondition, result, transaction, updateOne } from 'src/helper/sqlHelper'
 import { USER, USER_ACCOUNT, USER_FRIENDS, USER_INFO } from 'src/db/tables'
 import { eh } from 'src/helper/emailHelper'
-import { getRandom } from 'src/helper/utils'
+import { getRandom, validateCode } from 'src/helper/utils'
 import { Store } from 'src/helper/store'
 import { sessionStore } from 'src/db/globalStore'
 import { MySession } from 'src/type'
@@ -34,13 +34,13 @@ export class RegisterController {
         let flag = true
         let rollback: any
         try {
+          // 开启事务
           const cbs = await transaction()
           const commit = cbs.commit
           rollback = cbs.rollback
 
           // 创建用户账号
           const { insertId: tb_user_account } = await createOne(USER_ACCOUNT, { email, password })
-
           // 创建用户好友表
           const { insertId: tb_user_friends } = await createOne(USER_FRIENDS, {})
           // 创建用户信息表
@@ -90,6 +90,7 @@ export class RegisterController {
   async getCode(
     @Query('isCreate', new ParseBoolenPipe()) isCreate: boolean,
     @Query('email') email: string,
+    @Query('text') text: string,
     @Ip() ip: string,
   ) {
     // 对 IP 进行限制
@@ -99,6 +100,11 @@ export class RegisterController {
         return result('邮件六十秒内只允许发送一次')
       }
     }
+
+    // 校验验证码
+    const message = validateCode(text, ip)
+    if (message) return message
+
     try {
       // 查询邮箱是否存在
       let res = null

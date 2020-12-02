@@ -1,4 +1,6 @@
 import { createHmac } from 'crypto'
+import { captchaStore } from 'src/db/globalStore'
+import { result } from './sqlHelper'
 
 /**
  * 获取指定长度的随机数
@@ -15,4 +17,22 @@ export const getRandom = (len: number) => {
 export const md5 = (data: string) => {
   const hmac = createHmac('sha1', 'ff@dah')
   return hmac.update(data).digest('base64')
+}
+
+/**
+ * 校验验证码
+ * @param text 验证码
+ * @param ip ip地址
+ */
+export const validateCode = (text: string, ip: string) => {
+  const answer = captchaStore.get(ip)
+  if (!answer) {
+    return result('图片验证码已过期')
+  }
+  if (answer === text) {
+    captchaStore.delete(ip)
+    return null
+  } else {
+    return result('图片验证码错误')
+  }
 }
