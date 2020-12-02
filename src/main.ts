@@ -4,17 +4,28 @@ import { AppModule } from './app.module'
 import { db } from './db/driver'
 import * as rateLimit from 'express-rate-limit'
 import * as session from 'express-session'
+import * as FileStore from 'session-file-store'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   const port = 3000
+  // ip 请求次数限制
   app.use(
     rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 40, // limit each IP to 100 requests per windowMs
     }),
   )
-  app.use(session({ secret: 'ddd@fa', cookie: { maxAge: 1000 * 60 * 60 * 24 * 15 } }))
+  // session 中间件
+  app.use(
+    session({
+      secret: 'ddd@fa',
+      cookie: { maxAge: 1000 * 60 * 60 * 24 * 15 },
+      resave: false,
+      saveUninitialized: false,
+      store: new FileStore(session)(),
+    }),
+  )
   db.connect()
 
   try {

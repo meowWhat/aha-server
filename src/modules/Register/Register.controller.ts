@@ -1,10 +1,11 @@
-import { Body, Controller, Delete, Get, HttpStatus, Ip, Param, Post, Put, Session } from '@nestjs/common'
+import { Body, Controller, Get, HttpStatus, Ip, Post, Query, Session } from '@nestjs/common'
 import { createOne, findByCondition, result, transaction } from 'src/helper/sqlHelper'
 import { USER, USER_ACCOUNT, USER_FRIENDS, USER_INFO } from 'src/db/tables'
 import { eh } from 'src/helper/emailHelper'
 import { getRandom } from 'src/helper/utils'
 import { Store } from 'src/helper/store'
 import { sessionStore } from 'src/db/globalStore'
+import { MySession } from 'src/type'
 
 interface CreateDto {
   email: string
@@ -23,7 +24,7 @@ export class RegisterController {
    * 创建用户
    */
   @Post()
-  async create(@Body() { email, password, code }: CreateDto, @Session() session) {
+  async create(@Body() { email, password, code }: CreateDto, @Session() session: MySession) {
     // 校验邮箱
     const memoryCode = this.codeMap.get(email)
     if (memoryCode) {
@@ -44,7 +45,7 @@ export class RegisterController {
           // 创建用户信息表
           const { insertId: tb_user_info } = await createOne(USER_INFO, { nickname: email, email })
           // 创建用户总表
-          await createOne(USER, { tb_user_account, tb_user_friends, tb_user_info })
+          const { insertId: userId } = await createOne(USER, { tb_user_account, tb_user_friends, tb_user_info })
 
           // 顺利执行 提交
           await new Promise((resolve, reject) => {
@@ -60,9 +61,9 @@ export class RegisterController {
             })
           })
           // 储存会话状态
-          sessionStore.set(email, email)
+          sessionStore.set(session.id, userId)
           // 返回 sessionid
-          session.user = email
+          session.userKey = session.id
           // 移除验证码
           this.codeMap.delete(email)
           return result(`用户${email}创建成功`, HttpStatus.OK)
@@ -85,8 +86,8 @@ export class RegisterController {
   /**
    * 邮箱注册,获取验证码
    */
-  @Get(':email')
-  async getCode(@Param('email') email: string, @Ip() ip: string) {
+  @Get()
+  async getCode(@Query('email') email: string, @Ip() ip: string) {
     // 对 IP 进行限制
     const lastReqTime = this.ipMap.get(ip)
     if (lastReqTime) {
@@ -113,14 +114,4 @@ export class RegisterController {
       return result(error)
     }
   }
-
-  @Put(':id')
-  update(@Param('id') id: string, @Session() session) {
-    // console.log(session.username)
-    session.username = id
-    return `This action updates a #${id} cat`
-  }
-
-  @Delete()
-  async remove() {}
 }
