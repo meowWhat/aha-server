@@ -762,7 +762,7 @@
     "@types/qs" "*"
     "@types/range-parser" "*"
 
-"@types/express-session@^1.17.3":
+"@types/express-session@*", "@types/express-session@^1.17.3":
   version "1.17.3"
   resolved "https://registry.npm.taobao.org/@types/express-session/download/@types/express-session-1.17.3.tgz?cache=0&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40types%2Fexpress-session%2Fdownload%2F%40types%2Fexpress-session-1.17.3.tgz#4a37c5c4428b8f922ac8ac1cb4bd9190a4d2b097"
   integrity sha1-SjfFxEKLj5IqyKwctL2RkKTSsJc=
@@ -879,6 +879,14 @@
   dependencies:
     "@types/mime" "*"
     "@types/node" "*"
+
+"@types/session-file-store@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.npm.taobao.org/@types/session-file-store/download/@types/session-file-store-1.2.1.tgz#701d84cc1e7d9ed0e6023a4b1f14d9e4c83e4d2f"
+  integrity sha1-cB2EzB59ntDmAjpLHxTZ5Mg+TS8=
+  dependencies:
+    "@types/express" "*"
+    "@types/express-session" "*"
 
 "@types/source-list-map@*":
   version "0.1.2"

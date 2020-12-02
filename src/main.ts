@@ -6,6 +6,8 @@ import * as rateLimit from 'express-rate-limit'
 import * as session from 'express-session'
 import * as FileStore from 'session-file-store'
 
+const FS = FileStore(session)
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   const port = 3000
@@ -23,7 +25,10 @@ async function bootstrap() {
       cookie: { maxAge: 1000 * 60 * 60 * 24 * 15 },
       resave: false,
       saveUninitialized: false,
-      store: new FileStore(session)(),
+      store: new FS({
+        ttl: 1000 * 60 * 60 * 24 * 15,
+        retries: 2,
+      }),
     }),
   )
   db.connect()
