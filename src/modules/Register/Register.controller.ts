@@ -1,13 +1,14 @@
-import { Body, Controller, Get, HttpStatus, Ip, Post, Query, Session } from '@nestjs/common'
-import { createOne, findByCondition, result, transaction } from 'src/helper/sqlHelper'
+import { Body, Controller, Get, HttpStatus, Ip, Post, Query, Session, Put } from '@nestjs/common'
+import { createOne, findByCondition, result, transaction, updateOne } from 'src/helper/sqlHelper'
 import { USER, USER_ACCOUNT, USER_FRIENDS, USER_INFO } from 'src/db/tables'
 import { eh } from 'src/helper/emailHelper'
 import { getRandom } from 'src/helper/utils'
 import { Store } from 'src/helper/store'
 import { sessionStore } from 'src/db/globalStore'
 import { MySession } from 'src/type'
+import { ParseBoolenPipe } from 'src/pipe/typeParser'
 
-interface CreateDto {
+interface accountDto {
   email: string
   password: string
   code: string
@@ -24,7 +25,7 @@ export class RegisterController {
    * 创建用户
    */
   @Post()
-  async create(@Body() { email, password, code }: CreateDto, @Session() session: MySession) {
+  async create(@Body() { email, password, code }: accountDto, @Session() session: MySession) {
     // 校验邮箱
     const memoryCode = this.codeMap.get(email)
     if (memoryCode) {
@@ -69,7 +70,6 @@ export class RegisterController {
           return result(`用户${email}创建成功`, HttpStatus.OK)
         } catch (error) {
           if (flag) {
-            console.log('回滚')
             // 创表错误 回滚
             rollback && rollback()
           }
@@ -87,7 +87,11 @@ export class RegisterController {
    * 邮箱注册,获取验证码
    */
   @Get()
-  async getCode(@Query('email') email: string, @Ip() ip: string) {
+  async getCode(
+    @Query('isCreate', new ParseBoolenPipe()) isCreate: boolean,
+    @Query('email') email: string,
+    @Ip() ip: string,
+  ) {
     // 对 IP 进行限制
     const lastReqTime = this.ipMap.get(ip)
     if (lastReqTime) {
@@ -99,19 +103,57 @@ export class RegisterController {
       // 查询邮箱是否存在
       let res = null
       const row = await findByCondition(USER_ACCOUNT, { email })
-      if (Array.isArray(row) && row.length === 0) {
-        // 不存在邮箱 => 发送邮件
-        const code = getRandom(6)
-        this.ipMap.set(ip, Date.now())
-        await eh.send(email, code)
-        res = result('邮件发送成功!', HttpStatus.OK)
-        this.codeMap.set(email, code, 1000 * 60 * 10)
+      if (Array.isArray(row)) {
+        if ((isCreate === true && row.length === 0) || (isCreate === false && row.length === 1)) {
+          // 发送邮件
+          const code = getRandom(6)
+          this.ipMap.set(ip, Date.now(), 1000 * 60 * 2)
+          await eh.send(email, code)
+          res = result('邮件发送成功!', HttpStatus.OK)
+          this.codeMap.set(email, code, 1000 * 60 * 10)
+        } else {
+          // 取消发送
+          if (isCreate) {
+            res = result('参数错误,用户邮箱已注册!')
+          } else {
+            res = result('参数错误,用户邮箱不存在!')
+          }
+        }
       } else {
-        res = result('参数错误,邮箱已注册!')
+        res = result('查询失败', HttpStatus.INTERNAL_SERVER_ERROR)
       }
       return res
     } catch (error) {
       return result(error)
+    }
+  }
+
+  /**
+   * 找回密码
+   */
+  @Put('/forget')
+  async forget(@Body() { email, password, code }: accountDto, @Session() session: MySession) {
+    // 是否存储了 code
+    const memoryCode = this.codeMap.get(email)
+    if (!memoryCode) return result('邮箱验证码已失效')
+    // code 是否正确
+    if (memoryCode === code) {
+      // 修改密码
+      try {
+        // 更新密码
+        await updateOne(USER_ACCOUNT, { email }, { password })
+        this.codeMap.delete(email)
+        // 移除令牌(重新登陆)
+        if (session.userKey) {
+          session.userKey = null
+          sessionStore.delete(session.id)
+        }
+        return result('修改密码成功', 200)
+      } catch (error) {
+        return result(error)
+      }
+    } else {
+      return result('验证码错误')
     }
   }
 }
