@@ -18,9 +18,9 @@ class EmailHelp {
   }
   send(to: string, code: string) {
     return this.transporter.sendMail({
-      from: '👻👻👻<1797793818@qq.com>',
+      from: 'aha科技<1797793818@qq.com>',
       to,
-      subject: 'aha科技', // Subject line
+      subject: '尊敬的用户,请及时核对您的验证码~', // Subject line
       html: this.getMessageBody(to, code), // html body
     })
   }
