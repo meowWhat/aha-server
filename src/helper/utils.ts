@@ -36,3 +36,11 @@ export const validateCode = (text: string, ip: string) => {
     return result('图片验证码错误')
   }
 }
+
+/**
+ * 添加前缀
+ * @param tbname 表名
+ */
+export const addPrefix = (tbname: string, prefix = 'tb_') => {
+  return `${prefix}${tbname}`
+}

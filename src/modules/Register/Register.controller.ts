@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpStatus, Ip, Post, Query, Session, Put } from '@nestjs/common'
 import { createOne, findByCondition, result, transaction, updateOne } from 'src/helper/sqlHelper'
-import { USER, USER_ACCOUNT, USER_FRIENDS, USER_INFO } from 'src/db/tables'
+import { USER, USER_ACCOUNT, USER_INFO } from 'src/db/tables'
 import { eh } from 'src/helper/emailHelper'
 import { getRandom, validateCode } from 'src/helper/utils'
 import { Store } from 'src/helper/store'
@@ -41,12 +41,10 @@ export class RegisterController {
 
           // 创建用户账号
           const { insertId: tb_user_account } = await createOne(USER_ACCOUNT, { email, password })
-          // 创建用户好友表
-          const { insertId: tb_user_friends } = await createOne(USER_FRIENDS, {})
           // 创建用户信息表
           const { insertId: tb_user_info } = await createOne(USER_INFO, { nickname: email, email })
           // 创建用户总表
-          const { insertId: userId } = await createOne(USER, { tb_user_account, tb_user_friends, tb_user_info })
+          const { insertId: userId } = await createOne(USER, { tb_user_account, tb_user_info })
 
           // 顺利执行 提交
           await new Promise((resolve, reject) => {

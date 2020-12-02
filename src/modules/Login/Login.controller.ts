@@ -1,6 +1,6 @@
 import { Body, Controller, Ip, Post, Session } from '@nestjs/common'
 import { sessionStore } from 'src/db/globalStore'
-import { USER_ACCOUNT } from 'src/db/tables'
+import { USER, USER_ACCOUNT } from 'src/db/tables'
 import { findByCondition, result } from 'src/helper/sqlHelper'
 import { validateCode } from 'src/helper/utils'
 import { MySession } from 'src/type'
@@ -13,6 +13,7 @@ interface LoginDto {
   // 验证码
   text: string
 }
+type row = { id: number }[]
 
 @Controller('login')
 export class LoginController {
@@ -24,17 +25,21 @@ export class LoginController {
     if (message) return message
 
     // 校验账号,密码
-    const res = await findByCondition(USER_ACCOUNT, { email, password })
-    if (res) {
-      // 登陆失败
-      return result('账号或密码错误,请重新输入.')
+    try {
+      const accountRow: row = await findByCondition(USER_ACCOUNT, { email, password })
+      if (accountRow.length === 0) {
+        // 账号密码错误
+        return result('账号或密码错误,请重新输入!')
+      }
+      const userRow: row = await findByCondition(USER, { tb_user_account: accountRow[0].id })
+      // 登录成功
+      // 发送令牌
+      session.userKey = session.id
+      // 保存登录态
+      sessionStore.set(session.id, userRow[0].id)
+      return result('登陆成功', 200)
+    } catch (error) {
+      return result(error)
     }
-    // 登录成功
-    // 发送令牌
-    session.userKey = session.id
-    // 保存登录态
-    sessionStore.set(session.id, 'userid')
-
-    return result('登陆成功', 200)
   }
 }
