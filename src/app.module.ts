@@ -2,6 +2,7 @@ import { Controller, Module, Get, Ip } from '@nestjs/common'
 import { captchaStore } from './db/globalStore'
 import { getCaptcha } from './helper/captcha'
 import { result } from './helper/sqlHelper'
+import { FriendModule } from './modules/Friend/Friend.module'
 import { LoginModule } from './modules/Login/Login.module'
 import { RegisterModule } from './modules/Register/Register.module'
 import { UserModule } from './modules/user/user.module'
@@ -20,7 +21,7 @@ class AppControl {
 }
 
 @Module({
-  imports: [RegisterModule, LoginModule, UserModule],
+  imports: [RegisterModule, LoginModule, UserModule, FriendModule],
   controllers: [AppControl],
 })
 export class AppModule {}

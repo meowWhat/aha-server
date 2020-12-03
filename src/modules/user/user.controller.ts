@@ -11,6 +11,7 @@ export class UserController {
   constructor(service: UserService) {
     this.service = service
   }
+
   // 查询用户 info
   @Get('/info')
   async getInfo(@Session() { userKey }: MySession) {
@@ -34,11 +35,4 @@ export class UserController {
       return result(error)
     }
   }
-
-  // 查询用户好友列表
-  @Get('/friends')
-  async getFriends(@Session() { userKey }: MySession) {}
-  // 更新好友列表
-  @Put('/friends')
-  updateGroup() {}
 }

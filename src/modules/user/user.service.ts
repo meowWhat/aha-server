@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common'
-import { sessionStore } from 'src/db/globalStore'
+
 import { USER } from 'src/db/tables'
-import { findById, result } from 'src/helper/sqlHelper'
+import { findById } from 'src/helper/sqlHelper'
+import { getUseridBySessionKey } from 'src/helper/utils'
 
 @Injectable()
 export class UserService {
@@ -11,10 +12,7 @@ export class UserService {
    * @param column 表名
    */
   async findColumnFromUserTb(userKey: string, column: string) {
-    const userId = sessionStore.get(userKey)
-    if (!userId) {
-      throw result('登录信息失效,请先登录')
-    }
+    const userId = getUseridBySessionKey(userKey)
     const userRow: {}[] = await findById(USER, userId)
     return userRow[0][column]
   }

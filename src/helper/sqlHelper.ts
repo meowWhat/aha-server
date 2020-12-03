@@ -1,6 +1,9 @@
 import { HttpStatus } from '@nestjs/common'
 import { db } from '../db/driver'
 
+type condition = {
+  [key: string]: string | number | [string, string | number]
+}
 /**
  * 转换条件
  * @param obj 对象
@@ -70,6 +73,26 @@ const parserData = (obj: Object) => {
 }
 
 /**
+ * 转换列名
+ * @param column
+ */
+const parseColumn = (column: string[]) => {
+  let place = ''
+
+  column.forEach((_, i) => {
+    if (i === column.length - 1) {
+      place += '??'
+    } else {
+      place += '??,'
+    }
+  })
+
+  return {
+    place,
+    values: column,
+  }
+}
+/**
  * 统一返回结果
  * @param code 状态码
  * @param message 信息
@@ -99,36 +122,31 @@ export const transaction = (): Promise<{ rollback: any; commit: any }> => {
 }
 
 /**
- * 查找所有数据
- * @param tb  表名
- */
-export const findAll = (tb: string) => {
-  return db.query(`SELECT * FROM ?? ;`, [tb])
-}
-
-/**
  * 根据 id 查找
  * @param tb 表名
  * @param id id
  */
-export const findById = (tb: string, id: number | string) => {
-  return db.query(`SELECT * FROM ?? where id = ? ;`, [tb, id])
+export const findById = (tb: string, id: number | string, column: string[] = ['*']) => {
+  const { place: columnPlace, values: columnValues } = parseColumn(column)
+
+  return db.query(`SELECT ${columnPlace} FROM ?? where id = ? ;`, [...columnValues, tb, id])
 }
 
 /**
  * 条件查询
  * @param tb 表名
  * @param condition 条件 { 'name' : '张三' , 'age':['>=',20] }
+ * @param column 列名 ['user_id','age']
  */
 
-export const findByCondition = (
-  tb: string,
-  condition: {
-    [key: string]: string | number | [string, string | number]
-  },
-) => {
-  const { place, values } = parserCondition(condition)
-  return db.query(`SELECT * FROM ?? WHERE ${place} ;`, [tb, ...values])
+export const findByCondition = (tb: string, condition: condition, column: string[] = ['*']) => {
+  let { place, values } = parserCondition(condition)
+  const { place: columnPlace, values: columnValues } = parseColumn(column)
+
+  if (place !== '') {
+    place = `WHERE ${place}`
+  }
+  return db.query(`SELECT ${columnPlace} FROM ?? ${place} ;`, [...columnValues, tb, ...values])
 }
 
 /**
@@ -167,7 +185,7 @@ export const createOne = (tb: string, param: { [key: string]: string | number })
  * update(user,{id:1},{age:20})
  * execute : `UPDATE user SET age = 20 WHERE id = 1;`
  */
-export const updateOne = (tb: string, condition: Object, data: Object) => {
+export const updateOne = (tb: string, condition: condition, data: Object) => {
   const { place: dataPlace, values: dataValues } = parserData(data)
 
   const { place: condPlace, values: condValues } = parserCondition(condition)
@@ -175,4 +193,15 @@ export const updateOne = (tb: string, condition: Object, data: Object) => {
   const sql = `UPDATE ?? SET ${dataPlace} WHERE ${condPlace};`
 
   return db.query(sql, [tb, ...dataValues, ...condValues])
+}
+
+/**
+ * 删除单条数据
+ * @param tb 表名
+ * @param condition 删除条件
+ */
+export const deleteOne = (tb: string, condition: condition) => {
+  const { place, values } = parserCondition(condition)
+  const sql = `DELETE FROM ?? WHERE ${place}`
+  return db.query(sql, [tb, ...values])
 }

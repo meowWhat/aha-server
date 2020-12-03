@@ -1,5 +1,5 @@
 import { createHmac } from 'crypto'
-import { captchaStore } from 'src/db/globalStore'
+import { captchaStore, sessionStore } from 'src/db/globalStore'
 import { result } from './sqlHelper'
 
 /**
@@ -43,4 +43,15 @@ export const validateCode = (text: string, ip: string) => {
  */
 export const addPrefix = (tbname: string, prefix = 'tb_') => {
   return `${prefix}${tbname}`
+}
+
+/**
+ * 获取 userId
+ */
+export const getUseridBySessionKey = (userKey: string) => {
+  const userId = sessionStore.get(userKey)
+  if (!userId) {
+    throw result('登录信息失效,请先登录')
+  }
+  return userId
 }
