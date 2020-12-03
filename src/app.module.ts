@@ -5,7 +5,7 @@ import { result } from './helper/sqlHelper'
 import { FriendModule } from './modules/Friend/Friend.module'
 import { LoginModule } from './modules/Login/Login.module'
 import { RegisterModule } from './modules/Register/Register.module'
-import { UserModule } from './modules/user/user.module'
+import { UserModule } from './modules/Users/User.module'
 
 @Controller('/app')
 // 功能性路由
