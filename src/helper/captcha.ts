@@ -13,6 +13,7 @@ export const getCaptcha = () => {
       mathMax: 20,
       color: true,
       noise: 5,
+      height: 44,
     })
   } else {
     captch = create({

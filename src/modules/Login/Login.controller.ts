@@ -1,8 +1,7 @@
-import { Body, Controller, Ip, Post, Session } from '@nestjs/common'
+import { Body, Controller, Post, Session } from '@nestjs/common'
 import { sessionStore } from 'src/db/globalStore'
 import { USER, USER_ACCOUNT } from 'src/db/tables'
 import { findByCondition, result } from 'src/helper/sqlHelper'
-import { validateCode } from 'src/helper/utils'
 import { MySession } from 'src/type'
 
 interface LoginDto {
@@ -19,11 +18,7 @@ type row = { id: number }[]
 export class LoginController {
   // 用户登录
   @Post()
-  async login(@Body() { email, password, text }: LoginDto, @Ip() ip: string, @Session() session: MySession) {
-    // 校验验证码
-    const message = validateCode(text, ip)
-    if (message) return message
-
+  async login(@Body() { email, password }: LoginDto, @Session() session: MySession) {
     // 校验账号,密码
     try {
       const accountRow: row = await findByCondition(USER_ACCOUNT, { email, password })

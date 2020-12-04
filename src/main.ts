@@ -5,6 +5,7 @@ import { db } from './db/driver'
 import * as rateLimit from 'express-rate-limit'
 import * as session from 'express-session'
 import * as FileStore from 'session-file-store'
+import * as cors from 'cors'
 
 const FS = FileStore(session)
 
@@ -18,6 +19,8 @@ async function bootstrap() {
       max: 100, // limit each IP to 100 requests per windowMs
     }),
   )
+  // 跨域
+  app.use(cors())
   // session 中间件
   app.use(
     session({
