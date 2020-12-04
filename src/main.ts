@@ -11,7 +11,7 @@ const FS = FileStore(session)
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
-  const port = 3000
+  const port = 30001
   // ip 请求次数限制
   app.use(
     rateLimit({
