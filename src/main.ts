@@ -6,6 +6,7 @@ import * as rateLimit from 'express-rate-limit'
 import * as session from 'express-session'
 import * as FileStore from 'session-file-store'
 import * as cors from 'cors'
+import { sessionTimeOut } from './consts'
 
 const FS = FileStore(session)
 
@@ -20,16 +21,22 @@ async function bootstrap() {
     }),
   )
   // 跨域
-  app.use(cors())
+  app.use(
+    cors({
+      origin: 'http://localhost:3000',
+      optionsSuccessStatus: 200,
+      credentials: true,
+    }),
+  )
   // session 中间件
   app.use(
     session({
       secret: 'ddd@fa',
-      cookie: { maxAge: 1000 * 60 * 60 * 24 * 15 },
+      cookie: { maxAge: sessionTimeOut },
       resave: false,
       saveUninitialized: false,
       store: new FS({
-        ttl: 1000 * 60 * 60 * 24 * 15,
+        ttl: sessionTimeOut,
         retries: 2,
       }),
     }),

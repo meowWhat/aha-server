@@ -7,6 +7,7 @@ import { Store } from 'src/helper/store'
 import { sessionStore } from 'src/db/globalStore'
 import { MySession } from 'src/type'
 import { ParseBoolenPipe } from 'src/pipe/typeParser'
+import { sessionTimeOut } from 'src/consts'
 
 interface accountDto {
   email: string
@@ -60,7 +61,7 @@ export class RegisterController {
             })
           })
           // 储存会话状态
-          sessionStore.set(session.id, userId)
+          sessionStore.set(session.id, userId,sessionTimeOut)
           // 返回 sessionid
           session.userKey = session.id
           // 移除验证码
@@ -83,6 +84,8 @@ export class RegisterController {
 
   /**
    * 邮箱注册,获取验证码
+   * 创建用户 发送验证码 ： isCreate  = true
+   * 找回密码 发送验证码 ： isCreate = fasle
    */
   @Get()
   async getCode(

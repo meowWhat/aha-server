@@ -76,9 +76,15 @@ const parserData = (obj: Object) => {
  * 转换列名
  * @param column
  */
-const parseColumn = (column: string[]) => {
-  let place = ''
+const parseColumn = (column: string[] | '*') => {
+  if (column === '*') {
+    return {
+      place: '*',
+      values: [],
+    }
+  }
 
+  let place = ''
   column.forEach((_, i) => {
     if (i === column.length - 1) {
       place += '??'
@@ -126,7 +132,7 @@ export const transaction = (): Promise<{ rollback: any; commit: any }> => {
  * @param tb 表名
  * @param id id
  */
-export const findById = (tb: string, id: number | string, column: string[] = ['*']) => {
+export const findById = (tb: string, id: number | string, column: string[] | '*' = '*') => {
   const { place: columnPlace, values: columnValues } = parseColumn(column)
 
   return db.query(`SELECT ${columnPlace} FROM ?? where id = ? ;`, [...columnValues, tb, id])
@@ -139,7 +145,7 @@ export const findById = (tb: string, id: number | string, column: string[] = ['*
  * @param column 列名 ['user_id','age']
  */
 
-export const findByCondition = (tb: string, condition: condition, column: string[] = ['*']) => {
+export const findByCondition = (tb: string, condition: condition, column: string[] | '*' = '*') => {
   let { place, values } = parserCondition(condition)
   const { place: columnPlace, values: columnValues } = parseColumn(column)
 

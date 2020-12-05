@@ -1,7 +1,9 @@
-import { Body, Controller, Post, Session } from '@nestjs/common'
+import { Body, Controller, Get, Post, Session } from '@nestjs/common'
+import { sessionTimeOut } from 'src/consts'
 import { sessionStore } from 'src/db/globalStore'
 import { USER, USER_ACCOUNT } from 'src/db/tables'
 import { findByCondition, result } from 'src/helper/sqlHelper'
+import { getUseridBySessionKey } from 'src/helper/utils'
 import { MySession } from 'src/type'
 
 interface LoginDto {
@@ -31,10 +33,21 @@ export class LoginController {
       // 发送令牌
       session.userKey = session.id
       // 保存登录态
-      sessionStore.set(session.id, userRow[0].id)
+      sessionStore.set(session.id, userRow[0].id, sessionTimeOut)
       return result('登陆成功', 200)
     } catch (error) {
       return result(error)
+    }
+  }
+
+  // 确认登录态
+  @Get()
+  async isLogin(@Session() session: MySession) {
+    try {
+      getUseridBySessionKey(session.userKey)
+      return result('用户已登录', 200)
+    } catch (error) {
+      result(error)
     }
   }
 }

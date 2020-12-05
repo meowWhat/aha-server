@@ -12,13 +12,12 @@ export const getCaptcha = () => {
       mathMin: 0,
       mathMax: 20,
       color: true,
-      noise: 5,
-      height: 44,
+      noise: 3,
     })
   } else {
     captch = create({
-      size: 6,
-      noise: 5,
+      size: 4,
+      noise: 3,
       color: true,
     })
   }

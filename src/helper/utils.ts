@@ -25,11 +25,11 @@ export const md5 = (data: string) => {
  * @param ip ip地址
  */
 export const validateCode = (text: string, ip: string) => {
-  const answer = captchaStore.get(ip)
+  const answer: string = captchaStore.get(ip)
   if (!answer) {
     return result('图片验证码已过期')
   }
-  if (answer === text) {
+  if (answer.toLocaleLowerCase() === text.toLocaleLowerCase()) {
     captchaStore.delete(ip)
     return null
   } else {
