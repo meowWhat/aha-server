@@ -3,6 +3,9 @@
 /node_modules
 /sessions
 
+# config
+.config
+
 # Logs
 logs
 *.log

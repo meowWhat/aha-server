@@ -44,10 +44,10 @@ export class LoginController {
   @Get()
   async isLogin(@Session() session: MySession) {
     try {
-      getUseridBySessionKey(session.userKey)
-      return result('用户已登录', 200)
+      const userId = getUseridBySessionKey(session.userKey)
+      return result(userId, 200)
     } catch (error) {
-      result(error)
+      return error
     }
   }
 }

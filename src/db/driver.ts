@@ -1,5 +1,6 @@
 import { createConnection, Connection } from 'mysql'
-
+import * as fs from 'fs'
+import * as path from 'path'
 class MysqlDriver {
   db: Connection
   /**
@@ -27,12 +28,16 @@ class MysqlDriver {
    * 连接数据库
    */
   connect() {
-    this.db = createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: 'root',
-      database: 'aha',
-    })
+    const config = {}
+    fs.readFileSync(path.join(process.cwd(), '.config'))
+      .toString()
+      .split('\n')
+      .forEach((item) => {
+        const splits = item.split(':')
+        config[splits[0]] = splits[1]
+      })
+
+    this.db = createConnection(config)
     this.db.connect((err) => {
       if (err) {
         console.log(`数据库连接失败,错误信息[ ${err} ]`.red)
