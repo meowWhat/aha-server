@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Put, Session } from '@nestjs/common'
+import { Body, Controller, Get, Post, Put, Session } from '@nestjs/common'
 import { USER_INFO } from 'src/db/tables'
 import { findById, result, updateOne } from 'src/helper/sqlHelper'
 import { addPrefix } from 'src/helper/utils'
@@ -31,6 +31,18 @@ export class UserController {
       const userInfoId = await this.service.findColumnFromUserTb(userKey, addPrefix(USER_INFO))
       const res = await updateOne(USER_INFO, { id: userInfoId }, data)
       return result(res, 200)
+    } catch (error) {
+      return result(error)
+    }
+  }
+
+  // 查询指定用户 info
+  @Post('/info')
+  async getInfoById(@Body() data: { id: string }) {
+    try {
+      const userInfoId = await this.service.getUserInfoId(data.id, addPrefix(USER_INFO))
+      const infoRow = await findById(USER_INFO, userInfoId)
+      return result(infoRow, 200)
     } catch (error) {
       return result(error)
     }

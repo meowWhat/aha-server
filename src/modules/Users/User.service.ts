@@ -16,4 +16,9 @@ export class UserService {
     const userRow: {}[] = await findById(USER, userId)
     return userRow[0][column]
   }
+
+  async getUserInfoId(userId: string, column: string) {
+    const userRow: {}[] = await findById(USER, userId)
+    return userRow[0][column]
+  }
 }
