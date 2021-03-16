@@ -4,11 +4,8 @@ import { AppModule } from './app.module'
 import { db } from './db/driver'
 import * as rateLimit from 'express-rate-limit'
 import * as session from 'express-session'
-import * as FileStore from 'session-file-store'
 import * as cors from 'cors'
 import { sessionTimeOut } from './consts'
-
-const FS = FileStore(session)
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
@@ -23,7 +20,7 @@ async function bootstrap() {
   // 跨域
   app.use(
     cors({
-      origin: 'http://192.168.0.105:3000',
+      origin: 'http://192.168.0.229:3000',
       optionsSuccessStatus: 200,
       credentials: true,
     }),
@@ -35,10 +32,6 @@ async function bootstrap() {
       cookie: { maxAge: sessionTimeOut },
       resave: false,
       saveUninitialized: false,
-      store: new FS({
-        ttl: sessionTimeOut,
-        retries: 2,
-      }),
     }),
   )
   db.connect()
