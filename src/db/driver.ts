@@ -1,6 +1,4 @@
 import { createConnection, Connection } from 'mysql'
-import * as fs from 'fs'
-import * as path from 'path'
 import { configHelper } from 'src/helper/configHelper'
 class MysqlDriver {
   db: Connection

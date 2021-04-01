@@ -6,7 +6,7 @@ import * as rateLimit from 'express-rate-limit'
 import * as session from 'express-session'
 import * as cors from 'cors'
 import { sessionTimeOut } from './consts'
-import { mq } from './mqtt/driver'
+// import { mq } from './mqtt/driver'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
@@ -21,7 +21,7 @@ async function bootstrap() {
   // 跨域
   app.use(
     cors({
-      origin: 'http://192.168.0.229:3000',
+      origin: 'http://localhost:3000',
       optionsSuccessStatus: 200,
       credentials: true,
     }),
@@ -37,7 +37,7 @@ async function bootstrap() {
   )
 
   db.connect()
-  mq.connect()
+  // mq.connect()
 
   try {
     await app.listen(port)

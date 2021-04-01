@@ -36,6 +36,9 @@ export class LoginController {
       sessionStore.set(session.id, userRow[0].id, sessionTimeOut)
       return result('登陆成功', 200)
     } catch (error) {
+
+      console.log(error)
+
       return result(error)
     }
   }
