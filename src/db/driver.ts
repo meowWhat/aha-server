@@ -1,6 +1,7 @@
 import { createConnection, Connection } from 'mysql'
 import * as fs from 'fs'
 import * as path from 'path'
+import { configHelper } from 'src/helper/configHelper'
 class MysqlDriver {
   db: Connection
   /**
@@ -28,15 +29,7 @@ class MysqlDriver {
    * 连接数据库
    */
   connect() {
-    const config = {}
-    fs.readFileSync(path.join(process.cwd(), '.config'))
-      .toString()
-      .split('\n')
-      .forEach((item) => {
-        const splits = item.split(':')
-        config[splits[0]] = splits[1]
-      })
-
+    const config = configHelper.readConfig(configHelper.MysqlConfigPath)
     this.db = createConnection(config)
     this.db.connect((err) => {
       if (err) {

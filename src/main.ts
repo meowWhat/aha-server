@@ -6,6 +6,7 @@ import * as rateLimit from 'express-rate-limit'
 import * as session from 'express-session'
 import * as cors from 'cors'
 import { sessionTimeOut } from './consts'
+import { mq } from './mqtt/driver'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
@@ -34,7 +35,9 @@ async function bootstrap() {
       saveUninitialized: false,
     }),
   )
+
   db.connect()
+  mq.connect()
 
   try {
     await app.listen(port)
