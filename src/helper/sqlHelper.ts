@@ -113,17 +113,24 @@ export const result = (message: any, code = HttpStatus.BAD_REQUEST) => {
 /**
  * 事务
  */
-export const transaction = (): Promise<{ rollback: any; commit: any }> => {
+export const transaction = (): Promise<{ rollback: any; commit: any; release: () => void }> => {
   return new Promise((resolve, reject) => {
-    db.db.beginTransaction((err) => {
+    db.pool.getConnection((err, connection) => {
       if (err) {
-        reject(err)
+        return reject(err)
       }
-      resolve({
-        rollback: db.db.rollback.bind(db.db),
-        commit: db.db.commit.bind(db.db),
+      connection.beginTransaction((_err) => {
+        if (_err) {
+          return reject(_err)
+        }
+        resolve({
+          rollback: connection.rollback.bind(connection),
+          commit: connection.commit.bind(connection),
+          release: () => connection.release()
+        })
       })
     })
+
   })
 }
 

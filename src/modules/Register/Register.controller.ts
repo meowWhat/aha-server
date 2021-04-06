@@ -57,11 +57,12 @@ export class RegisterController {
                 flag = false
                 rollback()
                 reject(err)
+                cbs.release()
               }
             })
           })
           // 储存会话状态
-          sessionStore.set(session.id, userId,sessionTimeOut)
+          sessionStore.set(session.id, userId, sessionTimeOut)
           // 返回 sessionid
           session.userKey = session.id
           // 移除验证码

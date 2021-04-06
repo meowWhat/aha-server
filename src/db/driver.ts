@@ -1,7 +1,8 @@
-import { createConnection, Connection } from 'mysql'
+import { createPool, Pool } from 'mysql'
 import { configHelper } from 'src/helper/configHelper'
+
 class MysqlDriver {
-  db: Connection
+  public pool: Pool
   /**
    * 执行 sql 语句
    * @param sql sql语句
@@ -10,16 +11,25 @@ class MysqlDriver {
               var inserts = ['users', 'id', userId];
    */
   query(sql: string, values: any[]): Promise<any> {
-    // 格式化 sql 语句
-    const formatSql = this.db.format(sql, values)
+
     return new Promise((resolve, reject) => {
-      this.db.query(formatSql, (err, row) => {
+      this.pool.getConnection((err, db) => {
         if (err) {
-          reject(err)
-        } else {
-          resolve(row)
+          console.log(err)
+          return reject(err)
         }
+        // 格式化 sql 语句
+        const formatSql = db.format(sql, values)
+        db.query(formatSql, (err, row) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve(row)
+            db.release()
+          }
+        })
       })
+
     })
   }
 
@@ -28,28 +38,14 @@ class MysqlDriver {
    */
   connect() {
     const config = configHelper.readConfig(configHelper.MysqlConfigPath)
-    this.db = createConnection(config)
-    this.db.connect((err) => {
-      if (err) {
-        console.log(`数据库连接失败,错误信息[ ${err} ]`.red)
-      } else {
-        console.log('数据库连接成功!'.green)
-      }
-    })
+    try {
+      this.pool = createPool(config)
+      console.log('数据库连接成功!'.green)
+    } catch (err) {
+      console.log(`数据库连接失败,错误信息[ ${err} ]`.red)
+    }
   }
 
-  /**
-   * 结束 db 连接
-   */
-  end() {
-    this.db.end((err) => {
-      if (err) {
-        console.log(`数据库断开连接失败,错误信息[ ${err} ]`.red)
-      } else {
-        console.log('数据库断开连接成功!'.green)
-      }
-    })
-  }
 }
 const db = new MysqlDriver()
 
