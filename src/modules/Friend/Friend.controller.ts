@@ -1,7 +1,7 @@
-import { Controller, Get, Session, Post, Put, Body, Delete } from '@nestjs/common'
+import { Controller, Get, Session, Post, Put, Body, Delete, Param } from '@nestjs/common'
 import { userAdderStore } from 'src/db/globalStore'
-import { USER, USER_ACCOUNT, USER_FRIENDS } from 'src/db/tables'
-import { createOne, deleteOne, findByCondition, result, updateOne } from 'src/helper/sqlHelper'
+import { USER, USER_ACCOUNT, USER_FRIENDS, USER_INFO } from 'src/db/tables'
+import { createOne, deleteOne, findByCondition, findById, result, updateOne } from 'src/helper/sqlHelper'
 import { addPrefix, getRandom, getUseridBySessionKey } from 'src/helper/utils'
 import { MySession } from 'src/type'
 
@@ -22,6 +22,21 @@ export class FriendController {
     }
   }
 
+  // 查询好友详情
+  @Post('/info')
+  async getFriendInfo(@Session() { userKey }: MySession, @Body('id') id: string) {
+    try {
+      const userId = getUseridBySessionKey(userKey)
+      const row1 = await findByCondition(USER_FRIENDS, { id: userId, [this.friend_id]: id })
+      const row2 = await findById(USER_INFO, id)
+      return result({
+        ...row1[0],
+        ...row2[0]
+      }, 200)
+    } catch (error) {
+      return result(error)
+    }
+  }
   // 添加好友 => 发起邀请
   @Post('/invite')
   async inviteFriend(@Body('email') email: string, @Session() { userKey }: MySession) {
