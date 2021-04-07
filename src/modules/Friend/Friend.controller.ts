@@ -70,7 +70,7 @@ export class FriendController {
           // 储存添加状态 
           userAdderStore.set(random, userId)
 
-          return result({ friendId: fUserId, key: random }, 200)
+          return result({ userId: userId, friendId: fUserId, key: random }, 200)
         }
       }
 
