@@ -106,16 +106,14 @@ export class FriendController {
 
   // 更新好友列表 (分组,权限)
   @Put()
-  async updateFriend(@Session() { userKey }: MySession, @Body() body: {}) {
+  async updateFriend(@Session() { userKey }: MySession, @Body() body: { friend_id: string, remark: string, role: number }) {
     try {
-      if (body[this.friend_id] || body['id']) {
-        return result('参数错误,用户id不能修改')
-      }
+      const { friend_id, remark, role } = body
       const userId = getUseridBySessionKey(userKey)
 
-      await updateOne(USER_FRIENDS, { [this.friend_id]: userId }, body)
+      await updateOne(USER_FRIENDS, { ['id']: userId, [this.friend_id]: friend_id }, { remark: remark || null, role: role || 3 })
 
-      return result('好友添加成功', 200)
+      return result('备注修改成功', 200)
     } catch (error) {
       return result(error)
     }
