@@ -1,4 +1,4 @@
-import { Controller, Get, Session, Post, Put, Body, Delete } from '@nestjs/common'
+import { Controller, Get, Session, Post, Put, Body, Delete, Param } from '@nestjs/common'
 import { userAdderStore } from 'src/db/globalStore'
 import { USER, USER_ACCOUNT, USER_FRIENDS, USER_INFO } from 'src/db/tables'
 import { createOne, deleteOne, findByCondition, findById, result, updateOne } from 'src/helper/sqlHelper'
@@ -37,6 +37,7 @@ export class FriendController {
       return result(error)
     }
   }
+
   // 添加好友 => 发起邀请
   @Post('/invite')
   async inviteFriend(@Body('email') email: string, @Session() { userKey }: MySession) {
@@ -127,6 +128,21 @@ export class FriendController {
       await deleteOne(USER_FRIENDS, { id: userId, [this.friend_id]: fUserId })
       await deleteOne(USER_FRIENDS, { id: fUserId, [this.friend_id]: userId })
       return result('好友删除成功', 200)
+    } catch (error) {
+      return result(error)
+    }
+  }
+
+  // 校验好友是否存在
+  @Get(':id')
+  async isFriend(@Session() { userKey }: MySession, @Param('id') id: string) {
+    try {
+      const userId = getUseridBySessionKey(userKey)
+      const row = await findByCondition(USER_FRIENDS, { id: userId, [this.friend_id]: id })
+      if (row && Array.isArray(row) && row.length > 0) {
+        return result('好友存在', 200)
+      }
+      return result('好友不存在')
     } catch (error) {
       return result(error)
     }
