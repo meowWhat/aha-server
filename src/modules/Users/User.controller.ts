@@ -47,4 +47,19 @@ export class UserController {
       return result(error)
     }
   }
+  @Get('/logout')
+  async logOut(@Session() session: MySession) {
+    const res = await new Promise((reslove, reject) => {
+      session.destroy((err) => {
+        if (err) {
+          reject(err)
+        }
+        reslove(true)
+      })
+    })
+    if (res === true) {
+      return result('登出成功', 200)
+    }
+    return result(res)
+  }
 }
