@@ -28,11 +28,15 @@ export class FriendController {
     try {
       const userId = getUseridBySessionKey(userKey)
       const row1 = await findByCondition(USER_FRIENDS, { id: userId, [this.friend_id]: id })
-      const row2 = await findById(USER_INFO, id)
+      const row2 = await findByCondition(USER, { id })
+      const fInfoId = row2[0][addPrefix(USER_INFO)]
+      const row3 = await findById(USER_INFO, fInfoId)
       return result({
-        ...row1[0],
-        ...row2[0]
+        remark: row1[0].remark,
+        role: row1[0].role,
+        ...row3[0],
       }, 200)
+      return result('asdasd')
     } catch (error) {
       return result(error)
     }
