@@ -6,11 +6,21 @@ import * as rateLimit from 'express-rate-limit'
 import * as session from 'express-session'
 import * as cors from 'cors'
 import { sessionTimeOut } from './consts'
-// import { mq } from './mqtt/driver'
+import * as fs from 'fs'
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule)
+  const isProd = process.argv[2] === '--prod'
+
+  const app = await NestFactory.create(AppModule, isProd ? {
+    httpsOptions: {
+      key: fs.readFileSync('./cert/server.key'),
+      cert: fs.readFileSync('./cert/server.pem')
+    }
+  } : undefined
+  )
+
   const port = 30001
+
   // ip 请求次数限制
   app.use(
     rateLimit({
@@ -21,7 +31,7 @@ async function bootstrap() {
   // 跨域
   app.use(
     cors({
-      origin: 'http://localhost:3000',
+      origin: isProd ? 'https://www.jiahao.site' : 'http://localhost:3000',
       optionsSuccessStatus: 200,
       credentials: true,
     }),
