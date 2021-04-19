@@ -1,7 +1,23 @@
-import { Controller, Get, Session, Post, Put, Body, Delete, Param } from '@nestjs/common'
+import {
+  Controller,
+  Get,
+  Session,
+  Post,
+  Put,
+  Body,
+  Delete,
+  Param,
+} from '@nestjs/common'
 import { userAdderStore } from 'src/db/globalStore'
 import { USER, USER_ACCOUNT, USER_FRIENDS, USER_INFO } from 'src/db/tables'
-import { createOne, deleteOne, findByCondition, findById, result, updateOne } from 'src/helper/sqlHelper'
+import {
+  createOne,
+  deleteOne,
+  findByCondition,
+  findById,
+  result,
+  updateOne,
+} from 'src/helper/sqlHelper'
 import { addPrefix, getRandom, getUseridBySessionKey } from 'src/helper/utils'
 import { MySession } from 'src/type'
 
@@ -24,19 +40,27 @@ export class FriendController {
 
   // 查询好友详情
   @Post('/info')
-  async getFriendInfo(@Session() { userKey }: MySession, @Body('id') id: string) {
+  async getFriendInfo(
+    @Session() { userKey }: MySession,
+    @Body('id') id: string,
+  ) {
     try {
       const userId = getUseridBySessionKey(userKey)
-      const row1 = await findByCondition(USER_FRIENDS, { id: userId, [this.friend_id]: id })
+      const row1 = await findByCondition(USER_FRIENDS, {
+        id: userId,
+        [this.friend_id]: id,
+      })
       const row2 = await findByCondition(USER, { id })
       const fInfoId = row2[0][addPrefix(USER_INFO)]
       const row3 = await findById(USER_INFO, fInfoId)
-      return result({
-        remark: row1[0].remark,
-        role: row1[0].role,
-        ...row3[0],
-      }, 200)
-      return result('asdasd')
+      return result(
+        {
+          remark: row1[0].remark,
+          role: row1[0].role,
+          ...row3[0],
+        },
+        200,
+      )
     } catch (error) {
       return result(error)
     }
@@ -44,8 +68,10 @@ export class FriendController {
 
   // 添加好友 => 发起邀请
   @Post('/invite')
-  async inviteFriend(@Body('email') email: string, @Session() { userKey }: MySession) {
-
+  async inviteFriend(
+    @Body('email') email: string,
+    @Session() { userKey }: MySession,
+  ) {
     const checkRow = (row: any) => {
       return Array.isArray(row) && row.length === 1 && row[0].id
     }
@@ -55,12 +81,19 @@ export class FriendController {
       const row1 = await findByCondition(USER_ACCOUNT, { email }, ['id'])
       if (checkRow(row1)) {
         const fAccountId = row1[0].id
-        const row2 = await findByCondition(USER, { [addPrefix(USER_ACCOUNT)]: fAccountId }, ['id'])
+        const row2 = await findByCondition(
+          USER,
+          { [addPrefix(USER_ACCOUNT)]: fAccountId },
+          ['id'],
+        )
 
         if (checkRow(row2)) {
           // 获取好友 id
           const fUserId = row2[0].id
-          const row = await findByCondition(USER_FRIENDS, { [this.friend_id]: fUserId })
+          const row = await findByCondition(USER_FRIENDS, {
+            [this.friend_id]: fUserId,
+            ['id']: userId,
+          })
 
           if (row.length > 0) {
             return result('好友已添加!')
@@ -72,7 +105,7 @@ export class FriendController {
             return result('不能添加自己为好友!')
           }
 
-          // 储存添加状态 
+          // 储存添加状态
           userAdderStore.set(random, userId)
 
           return result({ userId: userId, friendId: fUserId, key: random }, 200)
@@ -80,7 +113,6 @@ export class FriendController {
       }
 
       return result('邮箱错误,未查询到用户')
-
     } catch (error) {
       return result(error)
     }
@@ -88,7 +120,10 @@ export class FriendController {
 
   // 添加好友 => 会话应答
   @Post()
-  async createFriend(@Body('key') key: string, @Session() { userKey }: MySession) {
+  async createFriend(
+    @Body('key') key: string,
+    @Session() { userKey }: MySession,
+  ) {
     try {
       const userId = getUseridBySessionKey(userKey)
       const friendId = userAdderStore.get(key)
@@ -111,12 +146,19 @@ export class FriendController {
 
   // 更新好友列表 (分组,权限)
   @Put()
-  async updateFriend(@Session() { userKey }: MySession, @Body() body: { friend_id: string, remark: string, role: number }) {
+  async updateFriend(
+    @Session() { userKey }: MySession,
+    @Body() body: { friend_id: string; remark: string; role: number },
+  ) {
     try {
       const { friend_id, remark, role } = body
       const userId = getUseridBySessionKey(userKey)
 
-      await updateOne(USER_FRIENDS, { ['id']: userId, [this.friend_id]: friend_id }, { remark: remark || null, role: role || 3 })
+      await updateOne(
+        USER_FRIENDS,
+        { ['id']: userId, [this.friend_id]: friend_id },
+        { remark: remark || null, role: role || 3 },
+      )
 
       return result('备注修改成功', 200)
     } catch (error) {
@@ -126,7 +168,10 @@ export class FriendController {
 
   // 删除好友
   @Delete()
-  async deleteFriend(@Session() { userKey }: MySession, @Body('friend_id') fUserId: string) {
+  async deleteFriend(
+    @Session() { userKey }: MySession,
+    @Body('friend_id') fUserId: string,
+  ) {
     try {
       const userId = getUseridBySessionKey(userKey)
       await deleteOne(USER_FRIENDS, { id: userId, [this.friend_id]: fUserId })
@@ -142,7 +187,10 @@ export class FriendController {
   async isFriend(@Session() { userKey }: MySession, @Param('id') id: string) {
     try {
       const userId = getUseridBySessionKey(userKey)
-      const row = await findByCondition(USER_FRIENDS, { id: userId, [this.friend_id]: id })
+      const row = await findByCondition(USER_FRIENDS, {
+        id: userId,
+        [this.friend_id]: id,
+      })
       if (row && Array.isArray(row) && row.length > 0) {
         return result('好友存在', 200)
       }
